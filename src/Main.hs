@@ -1,8 +1,7 @@
-import Text.Regex.Applicative ((=~), RE, sym, psym, anySym, string)
-import Control.Applicative (many, some, optional, (<|>))
-import Control.Monad ((>=>))
+import Text.Regex.Applicative ((=~), RE, sym, psym, string)
+import Control.Applicative (many, some, optional)
 import Data.List (intercalate, isPrefixOf, isInfixOf)
-import Data.Maybe (mapMaybe, fromMaybe)
+import Data.Maybe (fromMaybe)
 import Data.Set (Set, member)
 import qualified Data.Set as S
 
@@ -44,4 +43,5 @@ ttsFormat (Card front _ d) = front <> case d of
   Just (CardDetail s n) -> " (" <> s <> ") " <> n
 
 main :: IO ()
-main = interact $ unlines . map ttsFormat . filter (not . alchemy) . mapMaybe (=~ card) . lines
+main = interact $ unlines . map ttsFormat . filter (not . alchemy) . map parse . lines
+  where parse c = fromMaybe (error ("Couldn't parse [" <> c <> "]")) $ c =~ card
