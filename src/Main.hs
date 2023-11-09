@@ -1,4 +1,5 @@
 import Text.Regex.Applicative ((=~), RE, sym, psym, string)
+import Text.Regex.Applicative.Common (decimal)
 import Control.Applicative (many, some, optional)
 import Data.List (intercalate, isPrefixOf, isInfixOf)
 import Data.Maybe (fromMaybe)
@@ -8,7 +9,7 @@ import qualified Data.Set as S
 type Regex a = RE Char a
 
 data CardDetail = CardDetail {set, num :: String} deriving (Show)
-data Card = Card {frontFace :: String, backFace :: Maybe String, details :: Maybe CardDetail} deriving (Show)
+data Card = Card {quantity :: Int, frontFace :: String, backFace :: Maybe String, details :: Maybe CardDetail} deriving (Show)
 
 word :: Regex String
 word = some (psym (not . (`elem` " /#()")))
@@ -26,19 +27,19 @@ face = intercalate " " <$> ((:) <$> word <*> many more)
   where more = some (sym ' ') *> word
 
 card :: Regex Card
-card = Card <$> face <*> back <*> optional (sym ' ' *> cardDetail)
+card = Card <$> decimal <* sym ' ' <*> face <*> back <*> optional (sym ' ' *> cardDetail)
   where back = optional (string " // " *> face)
 
 alchemySets :: Set String
 alchemySets = S.fromList ["YWOE", "YONE", "YBRO", "YDMU", "HBG", "YSNC", "YNEO", "YMIN"]
 
 alchemy :: Card -> Bool
-alchemy (Card front _ d) = "A-" `isPrefixOf` front || case d of
+alchemy (Card q front _ d) = "A-" `isPrefixOf` front || case d of
   Nothing -> False
   Just (CardDetail s n) -> s `member` alchemySets || "A-" `isInfixOf` n
 
 ttsFormat :: Card -> String
-ttsFormat (Card front _ d) = front <> case d of
+ttsFormat (Card q front _ d) = show q <> " " <> front <> case d of
   Nothing -> ""
   Just (CardDetail s n) -> " (" <> s <> ") " <> n
 
